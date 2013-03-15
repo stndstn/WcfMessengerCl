@@ -7,7 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.ServiceModel;
-using System.ServiceModel.Description; 
+using System.ServiceModel.Description;
+using System.Net;
+using System.Configuration;
+using System.Threading;
 
 namespace WcfMessengerCl
 {
@@ -26,33 +29,59 @@ namespace WcfMessengerCl
         {
             InitializeComponent();
         }
-
+        /*
         private MessengerClient CreateClient()
         {
+            string key0 = ConfigurationManager.AppSettings["Key0"];
             System.ServiceModel.BasicHttpBinding binding = new BasicHttpBinding(BasicHttpSecurityMode.None);
-            //EndpointAddress ep = new EndpointAddress("http://localhost:8000/Messenger");
-            //EndpointAddress ep = new EndpointAddress("http://localhost:55560/MessengerService.svc");
-            EndpointAddress ep = new EndpointAddress("http://li4shi2.azurewebsites.net/MessengerService.svc");
+            EndpointAddress ep = new EndpointAddress("http://localhost:55560/MessengerService.svc");
+            //EndpointAddress ep = new EndpointAddress("http://li4shi2.azurewebsites.net/MessengerService.svc");
             return new MessengerClient(binding, ep);
         }
+         */
         private void Form1_Load(object sender, EventArgs e)
         {
-            mClient = CreateClient();
-            mUserId = DateTime.Now.ToString("hhmmss");
-            if (mClient.Login(mUserId) == false)
+            try
             {
-                this.Close();
-                return;
+                //mClient = CreateClient();
+                mClient = new MessengerClient();
+
+                // get ip address
+                string ipaddr = string.Empty;
+                IPHostEntry host;
+                host = Dns.GetHostEntry(Dns.GetHostName());
+                foreach (IPAddress ip in host.AddressList)
+                {
+                    if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    {
+                        ipaddr = ip.ToString();
+                        break;
+                    }
+                }
+
+                //mUserId = DateTime.Now.ToString("hhmmss");
+                mUserId = System.Environment.MachineName + "-" + System.Diagnostics.Process.GetCurrentProcess().Id;
+                if (mClient.Login(mUserId) == false)
+                {
+                    MessageBox.Show("Login failed.");
+                    Application.ExitThread();
+                    return;
+                }
+                this.Text = mUserId;
+                string list = mClient.GetMemberList();
+                updateMemberList(list);
+                receiveMemberCompletedHandler = new EventHandler<ReceiveMemberListCompletedEventArgs>(OnReceiveMemberListCompleted);
+                mClient.ReceiveMemberListCompleted += receiveMemberCompletedHandler;
+                mClient.ReceiveMemberListAsync(mUserId);
+                receiveConnectionCompletedHandler = new EventHandler<ReceiveConnectionCompletedEventArgs>(OnReceiveConnectionCompleted);
+                mClient.ReceiveConnectionCompleted += receiveConnectionCompletedHandler;
+                mClient.ReceiveConnectionAsync(mUserId);
             }
-            this.Text = mUserId;
-            string list = mClient.GetMemberList();
-            updateMemberList(list);
-            receiveMemberCompletedHandler = new EventHandler<ReceiveMemberListCompletedEventArgs>(OnReceiveMemberListCompleted);
-            mClient.ReceiveMemberListCompleted += receiveMemberCompletedHandler;
-            mClient.ReceiveMemberListAsync(mUserId);
-            receiveConnectionCompletedHandler = new EventHandler<ReceiveConnectionCompletedEventArgs>(OnReceiveConnectionCompleted);
-            mClient.ReceiveConnectionCompleted += receiveConnectionCompletedHandler;
-            mClient.ReceiveConnectionAsync(mUserId);
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                Application.ExitThread();
+            }
         }
 
         void OnReceiveConnectionCompleted(object sender, ReceiveConnectionCompletedEventArgs e)
@@ -60,7 +89,7 @@ namespace WcfMessengerCl
             if(e.Error == null)
             {
                 MessengerLib.ConnectionRequestData data = e.Result;
-                ChatDlg dlg = new ChatDlg(this, CreateClient(), data.groupGuid, data.userSessionGuid, data.userFrom);
+                ChatDlg dlg = new ChatDlg(this, mClient, data.groupGuid, data.userSessionGuid, data.userFrom);
                 mChatDlgDict.Add(data.userFrom, dlg);
                 dlg.Show();
                 dlg.Activate();
@@ -85,6 +114,7 @@ namespace WcfMessengerCl
                 string list = e.Result;
                 updateMemberList(list);
             }
+            Thread.Sleep(500);
             mClient.ReceiveMemberListAsync(mUserId);
         }
 
@@ -102,7 +132,7 @@ namespace WcfMessengerCl
                 {
                     // create new chat window
                     MessengerLib.ConnectionResultData res = mClient.RequestConnect(mUserId, sel.Text);
-                    ChatDlg dlg = new ChatDlg(this, CreateClient(), res.groupGuid, res.userSessionGuid, sel.Text);
+                    ChatDlg dlg = new ChatDlg(this, mClient, res.groupGuid, res.userSessionGuid, sel.Text);
                     mChatDlgDict.Add(sel.Text, dlg);
                     dlg.Show();
                     dlg.Activate();

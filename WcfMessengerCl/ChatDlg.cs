@@ -9,6 +9,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.ServiceModel;
 using System.IO;
+using System.Threading;
 
 namespace WcfMessengerCl
 {
@@ -106,6 +107,8 @@ namespace WcfMessengerCl
         {
             if (e.Error == null)
             {
+                this.Visible = true;
+
                 MessengerLib.ContentData data = e.Result;
                 if (data.groupGuid != Guid.Empty)
                 {
@@ -167,6 +170,7 @@ namespace WcfMessengerCl
             {
                 WriteLine(e.Error.Message, Color.Black);
             }
+            Thread.Sleep(500);
             mClient.ReceiveContentDataAsync(mUserSessionGuid);
         }
         /*
@@ -446,6 +450,12 @@ namespace WcfMessengerCl
             mClient.ReceiveBGImgChunkCompleted -= mReceiveBGImgChunkCompletedHandler;
              */
             mClient.ReceiveContentDataCompleted -= mReceiveContentDataCompletedHandler;
+        }
+
+        private void ChatDlg_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            this.Hide();
+            e.Cancel = true;
         }
     }
 }

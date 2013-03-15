@@ -41,7 +41,6 @@
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
-            this.toolStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -145,14 +144,13 @@
             this.Controls.Add(this.splitContainer1);
             this.Name = "ChatDlg";
             this.Text = "ChatDlg";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ChatDlg_FormClosing);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.ChatDlg_FormClosed);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel1.PerformLayout();
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
-            this.toolStrip1.ResumeLayout(false);
-            this.toolStrip1.PerformLayout();
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             this.ResumeLayout(false);
