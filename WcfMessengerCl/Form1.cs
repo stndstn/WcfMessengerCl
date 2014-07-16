@@ -44,7 +44,9 @@ namespace WcfMessengerCl
             try
             {
                 //mClient = CreateClient();
-                mClient = new MessengerClient();
+                //mClient = new MessengerClient();
+                //mClient = new MessengerClient(new System.ServiceModel.WSHttpBinding(System.ServiceModel.SecurityMode.None), new EndpointAddress("http://192.168.98.129:8000/Messenger"));
+                mClient = new MessengerClient(new System.ServiceModel.WSHttpBinding(System.ServiceModel.SecurityMode.None), new EndpointAddress("http://localhost:8000/Messenger"));
 
                 // get ip address
                 string ipaddr = string.Empty;
